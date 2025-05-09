@@ -8,7 +8,6 @@ import { templates } from "@/lib/cv-templates";
 import CVPreview from "./cv-preview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { generateCVSuggestions } from "@/lib/openai";
 import { useToast } from "@/hooks/use-toast";
 
 interface TemplateSelectorProps {
@@ -40,11 +39,24 @@ export default function TemplateSelector({
   const handleGenerateSuggestions = async () => {
     try {
       setIsGeneratingSuggestions(true);
-      const suggestions = await generateCVSuggestions(cvData);
+      
+      const response = await fetch('/api/suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cvData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate suggestions');
+      }
+
+      const data = await response.json();
       
       toast({
         title: "AI Suggestions",
-        description: suggestions,
+        description: data.suggestions,
         duration: 10000,
       });
     } catch (error) {
