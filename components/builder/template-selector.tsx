@@ -43,7 +43,7 @@ export default function TemplateSelector({
       const suggestions = await generateCVSuggestions(cvData);
       
       toast({
-        title: "AI Suggestions Generated",
+        title: "AI Suggestions",
         description: suggestions,
         duration: 10000,
       });
