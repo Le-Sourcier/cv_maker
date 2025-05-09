@@ -2,23 +2,26 @@ import OpenAI from 'openai';
 
 const hasValidConfig = () => {
   return !!(
-    process.env.NEXT_PUBLIC_OPENAI_API_KEY &&
-    process.env.NEXT_PUBLIC_OPENAI_ORGANIZATION &&
-    process.env.NEXT_PUBLIC_OPENAI_BASE_URL
+    process.env.OPENAI_API_KEY &&
+    process.env.OPENAI_ORGANIZATION &&
+    process.env.OPENAI_BASE_URL
   );
 };
 
-let openai: OpenAI | null = null;
-
-if (hasValidConfig()) {
-  openai = new OpenAI({
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-    organization: process.env.NEXT_PUBLIC_OPENAI_ORGANIZATION,
-    baseURL: process.env.NEXT_PUBLIC_OPENAI_BASE_URL,
-  });
-}
+// Only initialize OpenAI on the server side
+const openai = typeof window === 'undefined' && hasValidConfig() 
+  ? new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      organization: process.env.OPENAI_ORGANIZATION,
+      baseURL: process.env.OPENAI_BASE_URL,
+    })
+  : null;
 
 export async function generateCVSuggestions(cvData: any) {
+  if (typeof window !== 'undefined') {
+    return "AI suggestions are only available server-side. Please use our API endpoint.";
+  }
+
   if (!openai) {
     return "AI suggestions are not available. Please configure OpenAI credentials.";
   }
@@ -48,6 +51,10 @@ export async function generateCVSuggestions(cvData: any) {
 }
 
 export async function enhanceCVContent(section: string, content: string) {
+  if (typeof window !== 'undefined') {
+    return "AI enhancement is only available server-side. Please use our API endpoint.";
+  }
+
   if (!openai) {
     return "AI enhancement is not available. Please configure OpenAI credentials.";
   }

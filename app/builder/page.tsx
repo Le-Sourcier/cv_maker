@@ -24,6 +24,11 @@ export default function BuilderPage() {
     setSelectedTemplate(templateId);
   };
 
+  const handleExportPDF = async () => {
+    // Implement PDF export logic here
+    console.log("Exporting PDF...");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <BuilderHeader cvData={cvData} />
@@ -49,7 +54,7 @@ export default function BuilderPage() {
               >
                 Preview
               </Button>
-              <Button>Export PDF</Button>
+              <Button onClick={handleExportPDF}>Export PDF</Button>
             </div>
           </div>
 
