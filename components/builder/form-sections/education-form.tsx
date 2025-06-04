@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { 
   Plus, 
   Trash2, 
@@ -13,20 +16,69 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Education } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 interface EducationFormProps {
   education: Education[];
   updateEducation: (education: Education[]) => void;
 }
 
-export default function EducationForm({ education, updateEducation }: EducationFormProps) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+// Zod Schema for a single education item
+const educationItemSchema = z.object({
+  id: z.string(),
+  institution: z.string().min(1, "Institution name is required"),
+  degree: z.string().min(1, "Degree is required"),
+  field: z.string().optional(), // Field of study
+  location: z.string().optional(),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().optional(),
+  current: z.boolean().default(false),
+  description: z.string()
+    .max(500, "Description should not exceed 500 characters")
+    .optional().or(z.literal('')),
+});
 
-  const addEducation = () => {
-    const newEducation: Education = {
-      id: Date.now().toString(),
+// Zod Schema for the array of education entries
+const educationSchema = z.object({
+  education: z.array(educationItemSchema),
+});
+
+type EducationFormData = z.infer<typeof educationSchema>;
+
+export default function EducationForm({ education: initialEducation, updateEducation }: EducationFormProps) {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+  const {
+    control,
+    register,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useForm<EducationFormData>({
+    resolver: zodResolver(educationSchema),
+    defaultValues: { education: initialEducation },
+    mode: "onBlur",
+  });
+
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: "education",
+  });
+
+  const watchedEducation = watch("education");
+  useEffect(() => {
+    if (watchedEducation) {
+      updateEducation(watchedEducation);
+    }
+  }, [watchedEducation, updateEducation]);
+
+  const addNewEducationItem = () => {
+    const newId = Date.now().toString();
+    append({
+      id: newId,
       institution: "",
       degree: "",
       field: "",
@@ -35,18 +87,12 @@ export default function EducationForm({ education, updateEducation }: EducationF
       endDate: "",
       current: false,
       description: "",
-    };
-    
-    const updatedEducation = [...education, newEducation];
-    updateEducation(updatedEducation);
-    setExpandedIndex(updatedEducation.length - 1);
+    });
+    setExpandedIndex(fields.length);
   };
 
-  const removeEducation = (index: number) => {
-    const updatedEducation = [...education];
-    updatedEducation.splice(index, 1);
-    updateEducation(updatedEducation);
-    
+  const removeItem = (index: number) => {
+    remove(index);
     if (expandedIndex === index) {
       setExpandedIndex(null);
     } else if (expandedIndex !== null && expandedIndex > index) {
@@ -54,75 +100,57 @@ export default function EducationForm({ education, updateEducation }: EducationF
     }
   };
 
-  const updateEducationItem = (index: number, updatedData: Partial<Education>) => {
-    const updatedEducation = [...education];
-    updatedEducation[index] = { ...updatedEducation[index], ...updatedData };
-    updateEducation(updatedEducation);
-  };
-
-  const moveEducation = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= education.length) return;
-    
-    const updatedEducation = [...education];
-    const [removed] = updatedEducation.splice(fromIndex, 1);
-    updatedEducation.splice(toIndex, 0, removed);
-    
-    updateEducation(updatedEducation);
-    
-    if (expandedIndex === fromIndex) {
-      setExpandedIndex(toIndex);
-    }
+  const getInputClassNames = (fieldName: string, index: number) => {
+    const fieldError = errors.education?.[index]?.[fieldName as keyof Education];
+    return cn(fieldError ? "border-destructive focus-visible:ring-destructive" : "");
   };
 
   return (
     <div className="space-y-4">
-      {education.length === 0 ? (
+      {fields.length === 0 ? (
         <div className="text-center py-6 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">No education added yet</p>
-          <Button onClick={addEducation}>
+          <Button onClick={addNewEducationItem}>
             <Plus className="h-4 w-4 mr-2" />
             Add Education
           </Button>
         </div>
       ) : (
         <>
-          {education.map((edu, index) => (
-            <Card key={edu.id} className={`p-4 ${expandedIndex === index ? 'border-primary' : ''}`}>
+          {fields.map((field, index) => (
+            <Card key={field.id} className={`p-4 ${expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="cursor-grab"
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
+                  <Button variant="ghost" size="sm" className="cursor-grab">
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </Button>
-                  
                   <div>
-                    <h3 className="font-medium">
-                      {edu.degree || edu.institution || `Education ${index + 1}`}
+                    <h3 className="font-semibold text-lg">
+                      {watchedEducation?.[index]?.degree || watchedEducation?.[index]?.institution || `Education ${index + 1}`}
                     </h3>
-                    {edu.institution && (
-                      <p className="text-sm text-muted-foreground">{edu.institution}</p>
+                    {watchedEducation?.[index]?.institution && (
+                      <p className="text-sm text-muted-foreground">{watchedEducation?.[index]?.institution}</p>
                     )}
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-1">
+                  <Button variant="ghost" size="sm" onClick={() => move(index, index - 1)} disabled={index === 0}><ChevronUp className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ChevronDown className="h-4 w-4" /></Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                    aria-expanded={expandedIndex === index}
                   >
                     {expandedIndex === index ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
-                  
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => removeEducation(index)}
+                    onClick={() => removeItem(index)}
                     className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                    aria-label="Remove education item"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -130,87 +158,134 @@ export default function EducationForm({ education, updateEducation }: EducationF
               </div>
               
               {expandedIndex === index && (
-                <div className="mt-4 space-y-4">
+                <div className="mt-4 space-y-4 pt-4 border-t border-dashed">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`institution-${index}`}>Institution</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`edu-${field.id}-institution`}>Institution</Label>
                       <Input 
-                        id={`institution-${index}`} 
-                        value={edu.institution} 
-                        onChange={(e) => updateEducationItem(index, { institution: e.target.value })} 
+                        id={`edu-${field.id}-institution`}
+                        {...register(`education.${index}.institution`)}
                         placeholder="University or school name"
+                        className={getInputClassNames("institution", index)}
+                        aria-invalid={errors.education?.[index]?.institution ? "true" : "false"}
                       />
+                      {errors.education?.[index]?.institution && <p className="text-sm text-destructive">{errors.education?.[index]?.institution?.message}</p>}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor={`degree-${index}`}>Degree</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`edu-${field.id}-degree`}>Degree</Label>
                       <Input 
-                        id={`degree-${index}`} 
-                        value={edu.degree} 
-                        onChange={(e) => updateEducationItem(index, { degree: e.target.value })} 
+                        id={`edu-${field.id}-degree`}
+                        {...register(`education.${index}.degree`)}
                         placeholder="Bachelor's, Master's, etc."
+                        className={getInputClassNames("degree", index)}
+                        aria-invalid={errors.education?.[index]?.degree ? "true" : "false"}
                       />
+                      {errors.education?.[index]?.degree && <p className="text-sm text-destructive">{errors.education?.[index]?.degree?.message}</p>}
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`field-${index}`}>Field of Study</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`edu-${field.id}-field`}>Field of Study</Label>
                       <Input 
-                        id={`field-${index}`} 
-                        value={edu.field} 
-                        onChange={(e) => updateEducationItem(index, { field: e.target.value })} 
+                        id={`edu-${field.id}-field`}
+                        {...register(`education.${index}.field`)}
                         placeholder="Computer Science, Business, etc."
+                        className={getInputClassNames("field", index)}
+                        aria-invalid={errors.education?.[index]?.field ? "true" : "false"}
                       />
+                      {errors.education?.[index]?.field && <p className="text-sm text-destructive">{errors.education?.[index]?.field?.message}</p>}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor={`start-date-${index}`}>Start Date</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`edu-${field.id}-location`}>Location</Label>
+                      <Input
+                        id={`edu-${field.id}-location`}
+                        {...register(`education.${index}.location`)}
+                        placeholder="City, Country"
+                        className={getInputClassNames("location", index)}
+                        aria-invalid={errors.education?.[index]?.location ? "true" : "false"}
+                      />
+                       {errors.education?.[index]?.location && <p className="text-sm text-destructive">{errors.education?.[index]?.location?.message}</p>}
+                    </div>
+                     <div className="space-y-1.5"> {/* Placeholder to make grid align with ExperienceForm, or add another field */}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div className="space-y-1.5 md:col-start-2"> {/* Aligns Start Date under Location from row above if screen is md or larger */}
+                      <Label htmlFor={`edu-${field.id}-startDate`}>Start Date</Label>
                       <div className="relative">
                         <Input 
-                          id={`start-date-${index}`} 
-                          value={edu.startDate} 
-                          onChange={(e) => updateEducationItem(index, { startDate: e.target.value })} 
+                          id={`edu-${field.id}-startDate`}
+                          {...register(`education.${index}.startDate`)}
                           placeholder="MM/YYYY"
+                          className={getInputClassNames("startDate", index)}
+                          aria-invalid={errors.education?.[index]?.startDate ? "true" : "false"}
                         />
-                        <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                       </div>
+                      {errors.education?.[index]?.startDate && <p className="text-sm text-destructive">{errors.education?.[index]?.startDate?.message}</p>}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor={`end-date-${index}`}>End Date</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`edu-${field.id}-endDate`}>End Date / Expected</Label>
                       <div className="relative">
                         <Input 
-                          id={`end-date-${index}`} 
-                          value={edu.endDate} 
-                          onChange={(e) => updateEducationItem(index, { endDate: e.target.value })} 
-                          placeholder={edu.current ? "Present" : "MM/YYYY"}
-                          disabled={edu.current}
+                          id={`edu-${field.id}-endDate`}
+                          {...register(`education.${index}.endDate`)}
+                          placeholder={watchedEducation?.[index]?.current ? "Present" : "MM/YYYY"}
+                          disabled={watchedEducation?.[index]?.current}
+                          className={getInputClassNames("endDate", index)}
+                          aria-invalid={errors.education?.[index]?.endDate ? "true" : "false"}
                         />
-                        <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                       </div>
+                      {errors.education?.[index]?.endDate && <p className="text-sm text-destructive">{errors.education?.[index]?.endDate?.message}</p>}
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor={`description-${index}`}>Description</Label>
-                    <Textarea 
-                      id={`description-${index}`} 
-                      value={edu.description} 
-                      onChange={(e) => updateEducationItem(index, { description: e.target.value })} 
-                      placeholder="Describe your studies, achievements, etc."
-                      rows={4}
+                  <div className="flex items-center space-x-2 pt-1">
+                    <Controller
+                        name={`education.${index}.current`}
+                        control={control}
+                        render={({ field: controllerField }) => (
+                            <Checkbox
+                                id={`edu-${field.id}-current`}
+                                checked={controllerField.value}
+                                onCheckedChange={(checked) => {
+                                    controllerField.onChange(checked);
+                                    if (checked) {
+                                      setValue(`education.${index}.endDate`, "");
+                                    }
+                                }}
+                            />
+                        )}
                     />
+                    <Label htmlFor={`edu-${field.id}-current`} className="text-sm font-normal">I currently study here</Label>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`edu-${field.id}-description`}>Description</Label>
+                    <Textarea 
+                      id={`edu-${field.id}-description`}
+                      {...register(`education.${index}.description`)}
+                      placeholder="Describe your studies, achievements, relevant coursework, etc."
+                      rows={3}
+                      className={getInputClassNames("description", index)}
+                      aria-invalid={errors.education?.[index]?.description ? "true" : "false"}
+                    />
+                    {errors.education?.[index]?.description && <p className="text-sm text-destructive">{errors.education?.[index]?.description?.message}</p>}
                   </div>
                 </div>
               )}
             </Card>
           ))}
           
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center mt-6">
             <Button 
+              type="button"
               variant="outline" 
-              onClick={addEducation}
+              onClick={addNewEducationItem}
+              className="w-full md:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add More Education

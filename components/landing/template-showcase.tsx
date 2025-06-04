@@ -1,6 +1,9 @@
+"use client"; // Required for framer-motion
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion"; // Import motion
 
 export default function TemplateShowcase() {
   const templates = [
@@ -21,20 +24,65 @@ export default function TemplateShowcase() {
     },
   ];
 
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+      }
+    },
+  };
+
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5 }},
+  };
+
   return (
-    <section className="py-20 bg-gray-50 dark:bg-gray-900">
+    // Updated section background to use a subtle shade of the theme's secondary color
+    <section className="py-20 bg-secondary/20 dark:bg-secondary/10">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          variants={fadeIn}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+        >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Professional Templates</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Choose from our selection of professionally designed templates to make your CV stand out.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+        >
           {templates.map((template, index) => (
-            <div key={index} className="group relative overflow-hidden rounded-xl">
-              <div className="relative h-96 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+            <motion.div
+              key={index}
+              className="group relative overflow-hidden rounded-xl"
+              variants={item}
+            >
+              {/* Updated template image container border to use theme variable */}
+              <div className="relative h-96 overflow-hidden rounded-xl border border-border">
                 <img 
                   src={template.image} 
                   alt={`${template.name} Template`}
@@ -50,18 +98,24 @@ export default function TemplateShowcase() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="text-center mt-12">
+        <motion.div
+          className="text-center mt-12"
+          variants={fadeIn}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+        >
           <Link href="/templates">
             <Button variant="outline" size="lg">
               View all templates
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

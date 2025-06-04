@@ -5,7 +5,8 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+    // Updated background and top border to use theme variables
+    <footer className="bg-secondary/30 dark:bg-secondary/20 border-t border-border">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-1">
@@ -82,7 +83,8 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="border-t border-gray-200 dark:border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+        {/* Updated divider border to use theme variable */}
+        <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground">
             © {currentYear} CV Builder. All rights reserved.
           </p>

@@ -1,11 +1,11 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+// Removed Inter import from next/font/google
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import ClientMotionWrapper from '@/components/client-motion-wrapper';
 
-const inter = Inter({ subsets: ['latin'] });
+// const inter = Inter({ subsets: ['latin'] }); // Removed Inter instance
 
 export const metadata: Metadata = {
   title: 'CV Builder - Create Professional Resumes',
@@ -19,7 +19,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      {/* Removed inter.className */}
+      <body>
         <ThemeProvider attribute="class" defaultTheme="light">
           <ClientMotionWrapper>
             {children}

@@ -10,7 +10,8 @@ import Footer from "@/components/landing/footer";
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <header className="bg-white dark:bg-gray-950 shadow-sm sticky top-0 z-50">
+      {/* Changed to bg-background for theme consistency */}
+      <header className="bg-background shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center space-x-2">
             <FileText className="h-6 w-6 text-primary" />
