@@ -33,11 +33,12 @@ export default function CVForm({ cvData, updateCV }: CVFormProps) {
         onValueChange={setExpandedSections}
         className="space-y-4"
       >
-        <AccordionItem value="personal" className="border rounded-lg p-1">
-          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+        {/* Removed p-1, added specific styling for trigger and content for better visual separation */}
+        <AccordionItem value="personal" className="border rounded-lg">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/30 hover:bg-muted/60 data-[state=open]:bg-muted/60 rounded-t-md data-[state=open]:rounded-b-none data-[state=open]:border-b data-[state=open]:border-border">
             Personal Details
           </AccordionTrigger>
-          <AccordionContent className="px-4 pt-2 pb-4">
+          <AccordionContent className="px-6 py-4 rounded-b-md bg-background">
             <PersonalDetailsForm 
               data={cvData.personalDetails} 
               updateData={(data) => updateCV({ personalDetails: { ...cvData.personalDetails, ...data } })}
@@ -45,11 +46,12 @@ export default function CVForm({ cvData, updateCV }: CVFormProps) {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="experience" className="border rounded-lg p-1">
-          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+        {/* Removed p-1, added specific styling for trigger and content for better visual separation */}
+        <AccordionItem value="experience" className="border rounded-lg">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/30 hover:bg-muted/60 data-[state=open]:bg-muted/60 rounded-t-md data-[state=open]:rounded-b-none data-[state=open]:border-b data-[state=open]:border-border">
             Work Experience
           </AccordionTrigger>
-          <AccordionContent className="px-4 pt-2 pb-4">
+          <AccordionContent className="px-6 py-4 rounded-b-md bg-background">
             <ExperienceForm 
               experiences={cvData.experience} 
               updateExperiences={(experiences) => updateCV({ experience: experiences })}
@@ -57,11 +59,12 @@ export default function CVForm({ cvData, updateCV }: CVFormProps) {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="education" className="border rounded-lg p-1">
-          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+        {/* Removed p-1, added specific styling for trigger and content for better visual separation */}
+        <AccordionItem value="education" className="border rounded-lg">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/30 hover:bg-muted/60 data-[state=open]:bg-muted/60 rounded-t-md data-[state=open]:rounded-b-none data-[state=open]:border-b data-[state=open]:border-border">
             Education
           </AccordionTrigger>
-          <AccordionContent className="px-4 pt-2 pb-4">
+          <AccordionContent className="px-6 py-4 rounded-b-md bg-background">
             <EducationForm 
               education={cvData.education} 
               updateEducation={(education) => updateCV({ education: education })}
@@ -69,11 +72,12 @@ export default function CVForm({ cvData, updateCV }: CVFormProps) {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="skills" className="border rounded-lg p-1">
-          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+        {/* Removed p-1, added specific styling for trigger and content for better visual separation */}
+        <AccordionItem value="skills" className="border rounded-lg">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/30 hover:bg-muted/60 data-[state=open]:bg-muted/60 rounded-t-md data-[state=open]:rounded-b-none data-[state=open]:border-b data-[state=open]:border-border">
             Skills
           </AccordionTrigger>
-          <AccordionContent className="px-4 pt-2 pb-4">
+          <AccordionContent className="px-6 py-4 rounded-b-md bg-background">
             <SkillsForm 
               skills={cvData.skills} 
               updateSkills={(skills) => updateCV({ skills: skills })}
@@ -81,11 +85,12 @@ export default function CVForm({ cvData, updateCV }: CVFormProps) {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="projects" className="border rounded-lg p-1">
-          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+        {/* Removed p-1, added specific styling for trigger and content for better visual separation */}
+        <AccordionItem value="projects" className="border rounded-lg">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/30 hover:bg-muted/60 data-[state=open]:bg-muted/60 rounded-t-md data-[state=open]:rounded-b-none data-[state=open]:border-b data-[state=open]:border-border">
             Projects
           </AccordionTrigger>
-          <AccordionContent className="px-4 pt-2 pb-4">
+          <AccordionContent className="px-6 py-4 rounded-b-md bg-background">
             <ProjectsForm 
               projects={cvData.projects} 
               updateProjects={(projects) => updateCV({ projects: projects })}

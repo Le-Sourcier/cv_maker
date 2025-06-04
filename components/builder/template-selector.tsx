@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Wand2 } from "lucide-react";
+import { Check, Wand2, Eye } from "lucide-react"; // Added Eye icon
 import { Button } from "@/components/ui/button";
 import { CVData } from "@/lib/types";
 import { templates } from "@/lib/cv-templates";
@@ -118,39 +118,54 @@ export default function TemplateSelector({
             {filteredTemplates.map(([id, template]) => (
               <div 
                 key={id}
+                // Removed onMouseEnter/onMouseLeave, adjusted layout to card with caption
                 className={`
-                  relative overflow-hidden rounded-lg border-2 transition-all duration-200 
+                  rounded-lg border-2 transition-all duration-200 flex flex-col
                   ${selectedTemplate === id ? 'border-primary shadow-lg' : 'border-muted hover:border-muted-foreground/50'}
                 `}
-                onMouseEnter={() => setPreviewTemplate(id)}
-                onMouseLeave={() => setPreviewTemplate(null)}
               >
-                <div className="relative aspect-[3/4] max-h-[400px] overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center transform scale-50 pointer-events-none p-2">
+                {/* Preview Area */}
+                <div className="relative aspect-[3/4] max-h-[400px] overflow-hidden bg-muted/30 dark:bg-muted/10">
+                  <div className="absolute inset-0 flex items-center justify-center transform scale-[0.65] origin-top pointer-events-none p-1">
                     <CVPreview cvData={cvData} templateId={id} />
                   </div>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-2">
-                      {template.category}
-                    </span>
-                    <h3 className="text-lg font-medium mb-2">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4 text-center px-4">{template.description}</p>
-                    
-                    {selectedTemplate === id ? (
-                      <Button size="sm" disabled>
-                        <Check className="mr-2 h-4 w-4" />
-                        Selected
-                      </Button>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onSelectTemplate(id)}
-                      >
-                        Use Template
-                      </Button>
-                    )}
+                </div>
+                {/* Caption Area */}
+                <div className="p-4 flex flex-col flex-grow">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="text-lg font-semibold">{template.name}</h3>
+                      <span className="text-xs font-medium text-primary">
+                        {template.category}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0" // Ensure button size is controlled
+                      onClick={() => setPreviewTemplate(id)}
+                      aria-label="Preview template"
+                    >
+                      <Eye className="h-5 w-5" />
+                    </Button>
                   </div>
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2 flex-grow">{template.description}</p>
+
+                  {selectedTemplate === id ? (
+                    <Button size="sm" disabled className="w-full mt-auto">
+                      <Check className="mr-2 h-4 w-4" />
+                      Selected
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onSelectTemplate(id)}
+                      className="w-full mt-auto"
+                    >
+                      Use Template
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -168,19 +183,32 @@ export default function TemplateSelector({
                 `}
               >
                 <div className="w-40 h-40 relative overflow-hidden rounded-md">
-                  <div className="absolute inset-0 flex items-center justify-center transform scale-50">
+                  {/* Adjusted scale for list view preview as well */}
+                  <div className="absolute inset-0 flex items-center justify-center transform scale-[0.65] origin-center">
                     <CVPreview cvData={cvData} templateId={id} />
                   </div>
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-medium">{template.name}</h3>
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                      {template.category}
-                    </span>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium">{template.name}</h3>
+                      <span className="text-xs font-medium text-primary mb-1 block">
+                        {template.category}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => setPreviewTemplate(id)}
+                      aria-label="Preview template"
+                    >
+                      <Eye className="h-5 w-5" />
+                    </Button>
                   </div>
-                  <p className="text-muted-foreground mb-4">{template.description}</p>
+
+                  <p className="text-muted-foreground mb-3 text-sm line-clamp-2">{template.description}</p>
                   
                   {selectedTemplate === id ? (
                     <Button size="sm" disabled>

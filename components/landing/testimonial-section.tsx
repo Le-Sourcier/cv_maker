@@ -1,5 +1,8 @@
+"use client"; // Required for framer-motion
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion"; // Import motion
 
 export default function TestimonialSection() {
   const testimonials = [
@@ -23,39 +26,82 @@ export default function TestimonialSection() {
     },
   ];
 
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+      }
+    },
+  };
+
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5 }},
+  };
+
   return (
-    <section className="py-20 bg-white dark:bg-gray-950">
+    // Updated section background to use theme variable
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          variants={fadeIn}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+        >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Users Say</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Thousands of job seekers have used our platform to create standout CVs and advance their careers.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+        >
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm">
-              <CardContent className="p-8">
-                <div className="mb-6">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span key={star} className="text-yellow-400 inline-block">★</span>
-                  ))}
-                </div>
-                <blockquote className="text-lg mb-6">"{testimonial.quote}"</blockquote>
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 mr-4">
-                    <AvatarFallback>{testimonial.avatar}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{testimonial.author}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+            <motion.div key={index} variants={item}>
+              {/* Removed custom background and border to use default Card styling from theme */}
+              <Card className="shadow-sm h-full"> {/* Added h-full for consistent height in flex/grid items if needed */}
+                <CardContent className="p-8 flex flex-col h-full"> {/* Added flex flex-col h-full for better content distribution if card heights vary */}
+                  <div className="mb-6">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className="text-yellow-400 inline-block">★</span>
+                    ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <blockquote className="text-lg mb-6 flex-grow">"{testimonial.quote}"</blockquote> {/* Added flex-grow to allow quote to take space */}
+                  <div className="flex items-center">
+                    <Avatar className="h-10 w-10 mr-4">
+                      <AvatarFallback>{testimonial.avatar}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{testimonial.author}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

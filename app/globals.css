@@ -1,8 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  --font-sans: 'Inter', sans-serif;
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
@@ -24,19 +27,19 @@
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --primary: 190 100% 30%; /* Deep Teal */
+    --primary-foreground: 190 100% 95%; /* Light Teal for text on primary */
+    --secondary: 210 15% 95%; /* Light Gray */
+    --secondary-foreground: 210 10% 40%; /* Dark Gray for text on secondary */
+    --muted: 210 15% 95%; /* Light Gray */
+    --muted-foreground: 210 10% 55%; /* Medium Gray for muted text */
+    --accent: 190 80% 45%; /* Brighter Teal for accents */
+    --accent-foreground: 190 100% 95%; /* Light Teal for text on accent */
+    --destructive: 0 70% 50%; /* Softer Red */
+    --destructive-foreground: 0 0% 100%; /* White for text on destructive */
+    --border: 210 10% 88%; /* Lighter Gray for borders */
+    --input: 210 10% 92%; /* Slightly darker Gray for input backgrounds */
+    --ring: 190 100% 30%; /* Deep Teal for focus rings */
     --radius: 0.75rem;
   }
 
@@ -47,19 +50,19 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --primary: 190 100% 40%; /* Slightly lighter Deep Teal for dark mode */
+    --primary-foreground: 190 100% 95%; /* Light Teal for text on primary */
+    --secondary: 210 10% 15%; /* Darker Gray for dark mode */
+    --secondary-foreground: 210 10% 80%; /* Lighter Gray for text on secondary */
+    --muted: 210 10% 15%; /* Darker Gray for dark mode */
+    --muted-foreground: 210 10% 65%; /* Medium Gray for muted text */
+    --accent: 190 80% 55%; /* Brighter Teal for accents in dark mode */
+    --accent-foreground: 190 100% 95%; /* Light Teal for text on accent */
+    --destructive: 0 70% 60%; /* Softer Red for dark mode */
+    --destructive-foreground: 0 0% 100%; /* White for text on destructive */
+    --border: 210 10% 25%; /* Darker Gray for borders in dark mode */
+    --input: 210 10% 20%; /* Even darker Gray for input backgrounds in dark mode */
+    --ring: 190 100% 40%; /* Slightly lighter Deep Teal for focus rings in dark mode */
   }
 }
 
@@ -68,7 +71,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
