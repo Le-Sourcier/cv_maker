@@ -19,6 +19,10 @@ import { cn } from "@/lib/utils";
 import PricingFaq from "@/components/pricing/pricing-faq";
 
 export default function PricingPage() {
+  // Note: The FileText icon was implicitly available via the removed header's imports.
+  // If it's needed by the global header (from layout.tsx), it should be there.
+  // For this page, it's not directly used after removing the local header.
+
   const plans = [
     {
       name: "Free",
@@ -81,35 +85,12 @@ export default function PricingPage() {
   ];
 
   return (
+    // Removed redundant header, assuming main header is in layout.tsx
     <main className="flex flex-col min-h-screen">
-      <header className="bg-white dark:bg-gray-950 shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">CV Builder</span>
-          </Link>
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/templates" className="text-sm font-medium hover:text-primary transition-colors">
-              Templates
-            </Link>
-            <Link href="/features" className="text-sm font-medium hover:text-primary transition-colors">
-              Features
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium text-primary transition-colors">
-              Pricing
-            </Link>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <Link href="/builder">
-              <Button>Create CV</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <section className="flex-1 py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+      <section className="flex-1 py-16 md:py-20 bg-gradient-to-b from-background to-secondary/20 dark:from-background dark:to-secondary/10">
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="text-center space-y-4 mb-12 md:mb-20">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+          <div className="text-center space-y-4 mb-12 md:mb-16"> {/* Adjusted bottom margin */}
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight"> {/* Adjusted text size for consistency */}
               Simple, Transparent Pricing
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-[700px] mx-auto">

@@ -4,35 +4,37 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { 
   Plus, 
   Trash2, 
-  ChevronUp, 
-  ChevronDown, 
+  // ChevronUp, // Removed for D&D
+  // ChevronDown, // Removed for D&D
   GripVertical,
-  Calendar
+  Calendar,
+  ChevronUp, // Kept for expand/collapse
+  ChevronDown // Kept for expand/collapse
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox"; // Assuming Checkbox component exists
+import { Checkbox } from "@/components/ui/checkbox";
 import { Experience } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
 
 interface ExperienceFormProps {
-  experiences: Experience[]; // This prop will be used for initial defaultValues
-  updateExperiences: (experiences: Experience[]) => void; // This will be called on valid form changes
+  experiences: Experience[];
+  updateExperiences: (experiences: Experience[]) => void;
 }
 
-// Zod Schema for a single experience item
 const experienceItemSchema = z.object({
-  id: z.string(), // Keep ID for keying and consistency
+  id: z.string(),
   company: z.string().min(1, "Company name is required"),
   position: z.string().min(1, "Position is required"),
   location: z.string().optional(),
-  startDate: z.string().min(1, "Start date is required"), // Basic validation, can be enhanced (e.g., regex for MM/YYYY)
+  startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
   current: z.boolean().default(false),
   description: z.string()
@@ -41,7 +43,6 @@ const experienceItemSchema = z.object({
     .optional().or(z.literal('')),
 });
 
-// Zod Schema for the array of experiences
 const experiencesSchema = z.object({
   experiences: z.array(experienceItemSchema),
 });
@@ -49,15 +50,15 @@ const experiencesSchema = z.object({
 type ExperiencesFormData = z.infer<typeof experiencesSchema>;
 
 export default function ExperienceForm({ experiences: initialExperiences, updateExperiences }: ExperienceFormProps) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(initialExperiences.length > 0 ? 0 : null);
 
   const {
     control,
     register,
-    handleSubmit, // We might not use handleSubmit directly if updates are live
     watch,
     formState: { errors },
-    setValue, // Useful for 'current' checkbox interaction
+    setValue,
+    reset,
   } = useForm<ExperiencesFormData>({
     resolver: zodResolver(experiencesSchema),
     defaultValues: { experiences: initialExperiences },
@@ -69,17 +70,22 @@ export default function ExperienceForm({ experiences: initialExperiences, update
     name: "experiences",
   });
 
-  // Watch for changes in the entire 'experiences' array
   const watchedExperiences = watch("experiences");
   useEffect(() => {
-    // Here, we could add a check to see if watchedExperiences is valid before calling update
-    // For example, by using `trigger()` and checking `formState.isValid`
-    // However, for live preview, sometimes it's better to pass data even if partially invalid.
-    // The parent/preview component can then decide how to render it.
     if (watchedExperiences) {
       updateExperiences(watchedExperiences);
     }
   }, [watchedExperiences, updateExperiences]);
+
+  useEffect(() => {
+    reset({ experiences: initialExperiences });
+    if (initialExperiences.length > 0 && expandedIndex === null) {
+        // setExpandedIndex(0); // Optionally expand first item if list becomes non-empty
+    } else if (initialExperiences.length === 0) {
+        setExpandedIndex(null);
+    }
+  }, [initialExperiences, reset, expandedIndex]);
+
 
   const addNewExperienceItem = () => {
     const newId = Date.now().toString();
@@ -93,7 +99,7 @@ export default function ExperienceForm({ experiences: initialExperiences, update
       current: false,
       description: "",
     });
-    setExpandedIndex(fields.length); // Expand the new item
+    setExpandedIndex(fields.length);
   };
 
   const removeItem = (index: number) => {
@@ -102,13 +108,42 @@ export default function ExperienceForm({ experiences: initialExperiences, update
       setExpandedIndex(null);
     } else if (expandedIndex !== null && expandedIndex > index) {
       setExpandedIndex(expandedIndex - 1);
+    } else if (fields.length -1 === 0) { // If last item removed
+        setExpandedIndex(null);
+    } else if (expandedIndex === fields.length -1 && index < expandedIndex) { // If item before current expanded is removed
+        // No change needed if last item is expanded and an item before it is removed
+    } else if (index < expandedIndex) {
+        // If item before current expanded is removed, no change to index needed due to RHF shift
+    } else if (expandedIndex !==null && index === expandedIndex && index === fields.length -1) {
+        setExpandedIndex(fields.length - 2 >=0 ? fields.length -2 : null);
     }
+
+
   };
 
-  // Helper for styling inputs with errors
-  const getInputClassNames = (fieldName: string, index: number) => {
-    const fieldError = errors.experiences?.[index]?.[fieldName as keyof Experience];
+  const getInputClassNames = (fieldName: keyof Experience, index: number) => {
+    const fieldError = errors.experiences?.[index]?.[fieldName];
     return cn(fieldError ? "border-destructive focus-visible:ring-destructive" : "");
+  };
+
+  const handleOnDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.source.index === result.destination.index) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    move(sourceIndex, destinationIndex);
+
+    if (expandedIndex === sourceIndex) {
+      setExpandedIndex(destinationIndex);
+    } else if (expandedIndex !== null) {
+      if (sourceIndex < expandedIndex && destinationIndex >= expandedIndex) {
+        setExpandedIndex(expandedIndex - 1);
+      } else if (sourceIndex > expandedIndex && destinationIndex <= expandedIndex) {
+        setExpandedIndex(expandedIndex + 1);
+      }
+    }
   };
 
   return (
@@ -116,28 +151,46 @@ export default function ExperienceForm({ experiences: initialExperiences, update
       {fields.length === 0 ? (
         <div className="text-center py-6 border-2 border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">No work experience added yet</p>
-          <Button onClick={addNewExperienceItem}>
+          <Button type="button" onClick={addNewExperienceItem}>
             <Plus className="h-4 w-4 mr-2" />
             Add Work Experience
           </Button>
         </div>
       ) : (
-        <>
-          {fields.map((field, index) => (
-            <Card key={field.id} className={`p-4 ${expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  {/* Drag handle - functionality via move buttons for now */}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="cursor-grab"
-                    // onClick={() => console.log("Attempt to grab")} // Placeholder for D&D
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  
-                  <div>
+        <DragDropContext onDragEnd={handleOnDragEnd}>
+          <Droppable droppableId="experienceItems" type="EXPERIENCE">
+            {(providedDroppable, snapshotDroppable) => (
+              <div
+                {...providedDroppable.droppableProps}
+                ref={providedDroppable.innerRef}
+                className={`space-y-4 ${snapshotDroppable.isDraggingOver ? 'bg-muted/20 rounded-lg p-1' : ''}`}
+              >
+                {fields.map((field, index) => (
+                  <Draggable key={field.id} draggableId={field.id} index={index}>
+                    {(providedDraggable, snapshotDraggable) => (
+                      <div
+                        ref={providedDraggable.innerRef}
+                        {...providedDraggable.draggableProps}
+                        className={cn(snapshotDraggable.isDragging ? "shadow-xl rounded-lg" : "")}
+                      >
+                        <Card
+                          className={cn(
+                            `p-4 transition-all duration-200`,
+                            expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'
+                          )}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="cursor-grab p-2 -ml-2"
+                                {...providedDraggable.dragHandleProps}
+                              >
+                                <GripVertical className="h-5 w-5 text-muted-foreground" />
+                              </Button>
+                              <div>
                     <h3 className="font-semibold text-lg">
                       {watchedExperiences?.[index]?.position || watchedExperiences?.[index]?.company || `Experience ${index + 1}`}
                     </h3>
@@ -148,11 +201,9 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                 </div>
                 
                 <div className="flex items-center space-x-1">
-                  {/* Move Up/Down Buttons - Optional */}
-                  <Button variant="ghost" size="sm" onClick={() => move(index, index - 1)} disabled={index === 0}><ChevronUp className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ChevronDown className="h-4 w-4" /></Button>
-
+                  {/* ChevronUp/Down for expand/collapse, reordering is now D&D */}
                   <Button 
+                    type="button"
                     variant="ghost" 
                     size="sm"
                     onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
@@ -160,8 +211,8 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                   >
                     {expandedIndex === index ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
-                  
                   <Button 
+                    type="button"
                     variant="ghost" 
                     size="sm" 
                     onClick={() => removeItem(index)}
@@ -187,7 +238,6 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                       />
                       {errors.experiences?.[index]?.company && <p className="text-sm text-destructive">{errors.experiences?.[index]?.company?.message}</p>}
                     </div>
-                    
                     <div className="space-y-1.5">
                       <Label htmlFor={`exp-${field.id}-position`}>Position</Label>
                       <Input 
@@ -213,7 +263,6 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                       />
                        {errors.experiences?.[index]?.location && <p className="text-sm text-destructive">{errors.experiences?.[index]?.location?.message}</p>}
                     </div>
-                    
                     <div className="space-y-1.5">
                       <Label htmlFor={`exp-${field.id}-startDate`}>Start Date</Label>
                       <div className="relative">
@@ -228,7 +277,6 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                       </div>
                       {errors.experiences?.[index]?.startDate && <p className="text-sm text-destructive">{errors.experiences?.[index]?.startDate?.message}</p>}
                     </div>
-                    
                     <div className="space-y-1.5">
                       <Label htmlFor={`exp-${field.id}-endDate`}>End Date</Label>
                       <div className="relative">
@@ -253,11 +301,10 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                         render={({ field: controllerField }) => (
                             <Checkbox
                                 id={`exp-${field.id}-current`}
-                                checked={controllerField.value}
+                                checked={Boolean(controllerField.value)} // Ensure value is boolean
                                 onCheckedChange={(checked) => {
                                     controllerField.onChange(checked);
                                     if (checked) {
-                                      // Clear end date when "current" is checked
                                       setValue(`experiences.${index}.endDate`, "");
                                     }
                                 }}
@@ -272,7 +319,7 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                     <Textarea 
                       id={`exp-${field.id}-description`}
                       {...register(`experiences.${index}.description`)}
-                      placeholder="Describe your responsibilities and achievements (e.g., Led a team of 5 engineers to deliver a new product feature...)"
+                      placeholder="Describe your responsibilities and achievements (e.g., Led a team of 5 engineers...)"
                       rows={4}
                       className={getInputClassNames("description", index)}
                       aria-invalid={errors.experiences?.[index]?.description ? "true" : "false"}
@@ -281,22 +328,28 @@ export default function ExperienceForm({ experiences: initialExperiences, update
                   </div>
                 </div>
               )}
-            </Card>
-          ))}
-          
-          <div className="flex justify-center mt-6">
-            <Button 
-              type="button" // Ensure it doesn't submit a parent form if any
-              variant="outline" 
-              onClick={addNewExperienceItem}
-              className="w-full md:w-auto"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More Experience
-            </Button>
-          </div>
-        </>
+                        </Card>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {providedDroppable.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
+       <div className="flex justify-center mt-6"> {/* Add button outside DND context */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addNewExperienceItem}
+            className="w-full md:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add More Experience
+          </Button>
+        </div>
     </div>
   );
 }

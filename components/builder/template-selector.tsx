@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Wand2, Eye } from "lucide-react"; // Added Eye icon
+import { Check, Wand2, Eye, Loader2 } from "lucide-react"; // Added Loader2 icon
 import { Button } from "@/components/ui/button";
 import { CVData } from "@/lib/types";
 import { templates } from "@/lib/cv-templates";
@@ -72,8 +72,9 @@ export default function TemplateSelector({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 max-w-md">
+      {/* Adjusted for responsiveness: stacks on small screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+        <div className="flex-1 max-w-full sm:max-w-md"> {/* Full width on small, max-w-md on sm+ */}
           <Input
             placeholder="Search templates..."
             value={searchTerm}
@@ -85,9 +86,13 @@ export default function TemplateSelector({
         <Button
           onClick={handleGenerateSuggestions}
           disabled={isGeneratingSuggestions}
-          className="ml-4"
+          className="ml-4" // Consider removing ml-4 if gap-4 on parent is enough, or adjust for sm screens.
         >
-          <Wand2 className="mr-2 h-4 w-4" />
+          {isGeneratingSuggestions ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Wand2 className="mr-2 h-4 w-4" />
+          )}
           {isGeneratingSuggestions ? "Generating..." : "Get AI Suggestions"}
         </Button>
       </div>
@@ -99,7 +104,8 @@ export default function TemplateSelector({
             <TabsTrigger value="list">List View</TabsTrigger>
           </TabsList>
 
-          <div className="flex gap-2">
+          {/* Category buttons now wrap */}
+          <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
             {categories.map((category) => (
               <Button
                 key={category}
@@ -177,21 +183,22 @@ export default function TemplateSelector({
             {filteredTemplates.map(([id, template]) => (
               <div
                 key={id}
+                // Adjusted for responsiveness: stacks on small screens
                 className={`
-                  flex items-center gap-6 p-4 rounded-lg border transition-all duration-200
+                  flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 rounded-lg border transition-all duration-200
                   ${selectedTemplate === id ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/50'}
                 `}
               >
-                <div className="w-40 h-40 relative overflow-hidden rounded-md">
-                  {/* Adjusted scale for list view preview as well */}
-                  <div className="absolute inset-0 flex items-center justify-center transform scale-[0.65] origin-center">
+                {/* Adjusted preview container for responsiveness */}
+                <div className="w-full sm:w-32 md:w-40 aspect-[3/4] sm:aspect-square relative overflow-hidden rounded-md bg-muted/30 dark:bg-muted/10 shrink-0">
+                  <div className="absolute inset-0 flex items-center justify-center transform scale-[0.65] sm:scale-[0.5] md:scale-[0.65] origin-center">
                     <CVPreview cvData={cvData} templateId={id} />
                   </div>
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex justify-between items-start w-full"> {/* Ensure this div takes full width */}
+                    <div className="flex-grow"> {/* Allow text content to take available space */}
                       <h3 className="text-lg font-medium">{template.name}</h3>
                       <span className="text-xs font-medium text-primary mb-1 block">
                         {template.category}

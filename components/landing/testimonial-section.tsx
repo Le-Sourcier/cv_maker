@@ -81,7 +81,8 @@ export default function TestimonialSection() {
             <motion.div key={index} variants={item}>
               {/* Removed custom background and border to use default Card styling from theme */}
               <Card className="shadow-sm h-full"> {/* Added h-full for consistent height in flex/grid items if needed */}
-                <CardContent className="p-8 flex flex-col h-full"> {/* Added flex flex-col h-full for better content distribution if card heights vary */}
+                {/* Adjusted padding for smaller screens */}
+                <CardContent className="p-6 sm:p-8 flex flex-col h-full"> {/* Added flex flex-col h-full for better content distribution if card heights vary */}
                   <div className="mb-6">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span key={star} className="text-yellow-400 inline-block">★</span>

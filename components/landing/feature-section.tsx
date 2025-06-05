@@ -92,7 +92,8 @@ export default function FeatureSection() {
             <motion.div
               key={index} 
               // Updated feature item background and border to use theme variables
-              className="p-8 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
+              // Adjusted padding for smaller screens
+              className="p-6 sm:p-8 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
               variants={item} // Apply item variant to each feature card
             >
               <div className="mb-4">{feature.icon}</div>

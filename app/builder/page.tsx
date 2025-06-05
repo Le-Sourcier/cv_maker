@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Printer, Download } from "lucide-react"; // Added Printer and Download icons
+import { Printer, Download, Loader2 } from "lucide-react"; // Added Loader2 icon
 import BuilderHeader from "@/components/builder/builder-header";
 import CVForm from "@/components/builder/cv-form";
 import TemplateSelector from "@/components/builder/template-selector";
@@ -16,6 +16,7 @@ export default function BuilderPage() {
   const [cvData, setCvData] = useState<CVData>(defaultCV);
   const [selectedTemplate, setSelectedTemplate] = useState("professional");
   const [currentTab, setCurrentTab] = useState("details");
+  const [isExportingPDF, setIsExportingPDF] = useState(false); // State for PDF export loading
 
   const handleUpdateCV = (updatedData: Partial<CVData>) => {
     setCvData((prev) => ({ ...prev, ...updatedData }));
@@ -26,8 +27,19 @@ export default function BuilderPage() {
   };
 
   const handleExportPDF = async () => {
-    // Implement PDF export logic here
-    console.log("Exporting PDF...");
+    setIsExportingPDF(true);
+    try {
+      // Simulate PDF export logic here
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Actual PDF generation would happen here
+      // For example, using a library like jsPDF or calling an API
+      alert("PDF Exported (simulated)!"); // Placeholder for actual export success
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      // Potentially show a toast notification for error
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   return (
@@ -40,8 +52,10 @@ export default function BuilderPage() {
           onValueChange={setCurrentTab}
           className="space-y-6"
         >
-          <div className="flex justify-between items-center">
-            <TabsList className="grid grid-cols-3 w-[400px]">
+          {/* Adjusted parent flex container for responsiveness */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            {/* TabsList now full-width on small screens, auto on larger */}
+            <TabsList className="grid grid-cols-3 w-full sm:w-auto">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="template">Template</TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -56,9 +70,13 @@ export default function BuilderPage() {
                 <Printer className="mr-2 h-4 w-4" />
                 Print Preview
               </Button>
-              <Button onClick={handleExportPDF}>
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
+              <Button onClick={handleExportPDF} disabled={isExportingPDF}>
+                {isExportingPDF ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                {isExportingPDF ? "Exporting..." : "Export PDF"}
               </Button>
             </div>
           </div>
@@ -92,8 +110,13 @@ export default function BuilderPage() {
           </TabsContent>
 
           <TabsContent value="preview" className="mt-6">
-            <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-              <CVPreview cvData={cvData} templateId={selectedTemplate} />
+            <div className="mx-auto max-w-4xl">
+              {/* Corrected scaling to use standard Tailwind breakpoints */}
+              <div className="transform origin-top scale-[0.75] sm:scale-[0.85] md:scale-[1] p-1 sm:p-2 md:p-0">
+                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-sm overflow-hidden">
+                  <CVPreview cvData={cvData} templateId={selectedTemplate} />
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

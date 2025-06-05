@@ -12,7 +12,7 @@ export default function HeroSection() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
           <motion.div 
-            className="md:w-1/2 space-y-6"
+            className="md:w-1/2 space-y-6 text-center md:text-left" // Added text-center for small screens
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}

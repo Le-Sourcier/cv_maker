@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'; // Added D&D imports
 import { 
   Plus, 
   Trash2, 
@@ -105,6 +106,27 @@ export default function EducationForm({ education: initialEducation, updateEduca
     return cn(fieldError ? "border-destructive focus-visible:ring-destructive" : "");
   };
 
+  const handleOnDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.source.index === result.destination.index) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    move(sourceIndex, destinationIndex); // RHF's move function
+
+    // Basic expandedIndex handling for D&D
+    if (expandedIndex === sourceIndex) {
+      setExpandedIndex(destinationIndex);
+    } else if (expandedIndex !== null) {
+      if (sourceIndex < expandedIndex && destinationIndex >= expandedIndex) {
+        setExpandedIndex(expandedIndex - 1);
+      } else if (sourceIndex > expandedIndex && destinationIndex <= expandedIndex) {
+        setExpandedIndex(expandedIndex + 1);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {fields.length === 0 ? (
@@ -116,15 +138,40 @@ export default function EducationForm({ education: initialEducation, updateEduca
           </Button>
         </div>
       ) : (
-        <>
-          {fields.map((field, index) => (
-            <Card key={field.id} className={`p-4 ${expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Button variant="ghost" size="sm" className="cursor-grab">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <div>
+        <DragDropContext onDragEnd={handleOnDragEnd}>
+          <Droppable droppableId="educationItems" type="EDUCATION">
+            {(providedDroppable, snapshotDroppable) => (
+              <div
+                {...providedDroppable.droppableProps}
+                ref={providedDroppable.innerRef}
+                className={`space-y-4 ${snapshotDroppable.isDraggingOver ? 'bg-muted/20 rounded-lg p-1' : ''}`}
+              >
+                {fields.map((field, index) => (
+                  <Draggable key={field.id} draggableId={field.id} index={index}>
+                    {(providedDraggable, snapshotDraggable) => (
+                      <div
+                        ref={providedDraggable.innerRef}
+                        {...providedDraggable.draggableProps}
+                        className={cn(snapshotDraggable.isDragging ? "shadow-xl rounded-lg" : "")}
+                      >
+                        <Card
+                          className={cn(
+                            `p-4 transition-all duration-200`,
+                            expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'
+                          )}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="cursor-grab p-2 -ml-2"
+                                {...providedDraggable.dragHandleProps}
+                              >
+                                <GripVertical className="h-5 w-5 text-muted-foreground" />
+                              </Button>
+                              <div>
                     <h3 className="font-semibold text-lg">
                       {watchedEducation?.[index]?.degree || watchedEducation?.[index]?.institution || `Education ${index + 1}`}
                     </h3>
@@ -135,9 +182,9 @@ export default function EducationForm({ education: initialEducation, updateEduca
                 </div>
                 
                 <div className="flex items-center space-x-1">
-                  <Button variant="ghost" size="sm" onClick={() => move(index, index - 1)} disabled={index === 0}><ChevronUp className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ChevronDown className="h-4 w-4" /></Button>
+                  {/* Removed ChevronUp/Down for D&D move */}
                   <Button 
+                    type="button"
                     variant="ghost" 
                     size="sm"
                     onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
@@ -277,21 +324,34 @@ export default function EducationForm({ education: initialEducation, updateEduca
                   </div>
                 </div>
               )}
-            </Card>
+                      {/* ... existing card content ... */}
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </Draggable>
           ))}
-          
-          <div className="flex justify-center mt-6">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={addNewEducationItem}
-              className="w-full md:w-auto"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More Education
-            </Button>
-          </div>
-        </>
+          {providedDroppable.placeholder}
+        </div>
+      )}
+    </Droppable>
+  </DragDropContext>
+)}
+{/* "Add More" button remains outside DragDropContext for simplicity */}
+{/* This logic for Add More button might need to be outside the fields.length > 0 check if we want it always visible,
+    but current structure has an add button in the empty state. So this is fine. */}
+{ ( // Ensure Add button is always visible if that's the desired UX, or use fields.length > 0 if only for "more"
+    <div className="flex justify-center mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addNewEducationItem}
+            className="w-full md:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add More Education
+          </Button>
+        </div>
       )}
     </div>
   );

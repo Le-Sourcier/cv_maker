@@ -4,20 +4,21 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'; // Added D&D imports
 import { 
   Plus, 
   Trash2, 
   ChevronUp, 
   ChevronDown, 
   GripVertical,
-  Link as LinkIcon, // Renamed to avoid conflict with Next.js Link
-  BookText // For skills icon
+  Link as LinkIcon,
+  BookText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Project } from "@/lib/types"; // Project type expects skills: string[]
+import { Project } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
 
@@ -26,25 +27,21 @@ interface ProjectsFormProps {
   updateProjects: (projects: Project[]) => void;
 }
 
-// Zod Schema for a single project item
-// For skills, we'll use a string in the form and convert it to string[] before updating parent
 const projectItemSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Project name is required"),
   description: z.string()
     .min(10, "Description should be at least 10 characters")
     .max(1000, "Description should not exceed 1000 characters"),
-  skills: z.string().optional(), // Comma-separated string for form input
+  skills: z.string().optional(),
   link: z.string().url("Invalid URL (e.g., https://example.com)").optional().or(z.literal('')),
   date: z.string().optional(),
 });
 
-// Zod Schema for the array of projects
 const projectsSchema = z.object({
   projects: z.array(projectItemSchema),
 });
 
-// Type for form data, where skills is a string
 type ProjectFormDataItem = z.infer<typeof projectItemSchema>;
 type ProjectsFormData = { projects: ProjectFormDataItem[] };
 
@@ -59,11 +56,10 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
     formState: { errors },
   } = useForm<ProjectsFormData>({
     resolver: zodResolver(projectsSchema),
-    // Convert initialProjects (skills: string[]) to form data (skills: string)
     defaultValues: {
       projects: initialProjects.map(p => ({
         ...p,
-        skills: p.skills.join(', '), // Join skills array into a comma-separated string
+        skills: p.skills.join(', '),
       }))
     },
     mode: "onBlur",
@@ -77,7 +73,6 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
   const watchedFormProjects = watch("projects");
   useEffect(() => {
     if (watchedFormProjects) {
-      // Convert skills string back to string[] before calling updateProjects
       const projectsToUpdate: Project[] = watchedFormProjects.map(p => ({
         ...p,
         skills: p.skills ? p.skills.split(',').map(s => s.trim()).filter(s => s) : [],
@@ -92,7 +87,7 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
       id: newId,
       name: "",
       description: "",
-      skills: "", // Initial skills as empty string
+      skills: "",
       link: "",
       date: "",
     });
@@ -113,6 +108,27 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
     return cn(fieldError ? "border-destructive focus-visible:ring-destructive" : "");
   };
 
+  const handleOnDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.source.index === result.destination.index) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    move(sourceIndex, destinationIndex); // RHF's move function
+
+    // Basic expandedIndex handling for D&D
+    if (expandedIndex === sourceIndex) {
+      setExpandedIndex(destinationIndex);
+    } else if (expandedIndex !== null) {
+      if (sourceIndex < expandedIndex && destinationIndex >= expandedIndex) {
+        setExpandedIndex(expandedIndex - 1);
+      } else if (sourceIndex > expandedIndex && destinationIndex <= expandedIndex) {
+        setExpandedIndex(expandedIndex + 1);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {fields.length === 0 ? (
@@ -124,15 +140,40 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
           </Button>
         </div>
       ) : (
-        <>
-          {fields.map((field, index) => (
-            <Card key={field.id} className={`p-4 ${expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Button variant="ghost" size="sm" className="cursor-grab">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <div>
+        <DragDropContext onDragEnd={handleOnDragEnd}>
+          <Droppable droppableId="projectItems" type="PROJECT">
+            {(providedDroppable, snapshotDroppable) => (
+              <div
+                {...providedDroppable.droppableProps}
+                ref={providedDroppable.innerRef}
+                className={`space-y-4 ${snapshotDroppable.isDraggingOver ? 'bg-muted/20 rounded-lg p-1' : ''}`}
+              >
+                {fields.map((field, index) => (
+                  <Draggable key={field.id} draggableId={field.id} index={index}>
+                    {(providedDraggable, snapshotDraggable) => (
+                      <div
+                        ref={providedDraggable.innerRef}
+                        {...providedDraggable.draggableProps}
+                        className={cn(snapshotDraggable.isDragging ? "shadow-xl rounded-lg" : "")}
+                      >
+                        <Card
+                          className={cn(
+                            `p-4 transition-all duration-200`,
+                            expandedIndex === index ? 'border-primary ring-1 ring-primary' : 'border-border'
+                          )}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="cursor-grab p-2 -ml-2"
+                                {...providedDraggable.dragHandleProps}
+                              >
+                                <GripVertical className="h-5 w-5 text-muted-foreground" />
+                              </Button>
+                              <div>
                     <h3 className="font-semibold text-lg">
                       {watchedFormProjects?.[index]?.name || `Project ${index + 1}`}
                     </h3>
@@ -143,9 +184,9 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
                 </div>
                 
                 <div className="flex items-center space-x-1">
-                  <Button variant="ghost" size="sm" onClick={() => move(index, index - 1)} disabled={index === 0}><ChevronUp className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ChevronDown className="h-4 w-4" /></Button>
+                  {/* Removed ChevronUp/Down for D&D move */}
                   <Button 
+                    type="button"
                     variant="ghost" 
                     size="sm"
                     onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
@@ -236,21 +277,32 @@ export default function ProjectsForm({ projects: initialProjects, updateProjects
                   </div>
                 </div>
               )}
-            </Card>
+                      {/* ... existing card content ... */}
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </Draggable>
           ))}
-          
-          <div className="flex justify-center mt-6">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={addNewProjectItem}
-              className="w-full md:w-auto"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More Projects
-            </Button>
-          </div>
-        </>
+          {providedDroppable.placeholder}
+        </div>
+      )}
+    </Droppable>
+  </DragDropContext>
+)}
+{/* "Add More" button remains outside DragDropContext */}
+{ (
+    <div className="flex justify-center mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addNewProjectItem}
+            className="w-full md:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add More Projects
+          </Button>
+        </div>
       )}
     </div>
   );
